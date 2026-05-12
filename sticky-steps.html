@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sticky Step-by-Step</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: #eee;
+      overflow-x: hidden;
+    }
+
+    .page-spacer {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #444;
+      font-size: .9rem;
+      letter-spacing: .1em;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .sticky-section {
+      height: 400vh;
+      position: relative;
+    }
+
+    .sticky-panel {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+    }
+
+    .labels-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2.5rem;
+      padding: 4rem 3rem 4rem 6vw;
+      border-right: 1px solid #1e1e1e;
+    }
+
+    .step-label {
+      opacity: .25;
+      transform: translateX(0);
+      transition: opacity .4s ease, transform .4s ease, color .4s ease;
+      cursor: default;
+    }
+
+    .step-label.is-active {
+      opacity: 1;
+      transform: translateX(10px);
+    }
+
+    .step-label__num {
+      display: block;
+      font-size: .7rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: .4rem;
+      transition: color .4s ease;
+    }
+
+    .step-label.is-active .step-label__num {
+      color: #888;
+    }
+
+    .step-label__title {
+      font-size: clamp(1.1rem, 1.8vw, 1.6rem);
+      font-weight: 600;
+      line-height: 1.3;
+      color: #eee;
+      max-width: 28ch;
+    }
+
+    .slides-col {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slides-track {
+      position: absolute;
+      inset: 0 0 auto 0;
+      will-change: transform;
+    }
+
+    .slide {
+      width: 100%;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .sticky-section {
+        height: auto;
+      }
+
+      .sticky-panel {
+        position: relative;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .labels-col {
+        flex-direction: row;
+        overflow-x: auto;
+        scrollbar-width: none;
+        gap: .75rem;
+        padding: 1.25rem 1.25rem;
+        border-right: none;
+        border-bottom: 1px solid #1e1e1e;
+      }
+
+      .labels-col::-webkit-scrollbar { display: none; }
+
+      .step-label {
+        flex: 0 0 auto;
+        padding: .6rem 1.1rem;
+        border: 1px solid #2a2a2a;
+        border-radius: 6px;
+        transform: none !important;
+      }
+
+      .step-label.is-active {
+        border-color: #666;
+        background: #1a1a1a;
+        transform: none !important;
+      }
+
+      .slides-col {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .slides-track {
+        position: relative;
+        display: flex;
+        transition: transform .4s cubic-bezier(.25,1,.5,1);
+      }
+
+      .slide {
+        flex: 0 0 100%;
+        height: 60vw;
+        min-height: 220px;
+        max-height: 440px;
+      }
+
+      .slide-dots {
+        display: flex;
+        justify-content: center;
+        gap: .5rem;
+        padding: .75rem 0 1.25rem;
+      }
+
+      .slide-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #333;
+        transition: background .3s, transform .3s;
+      }
+
+      .slide-dot.is-active {
+        background: #aaa;
+        transform: scale(1.4);
+      }
+    }
+
+    .slide-dots { display: none; }
+    @media (max-width: 768px) {
+      .slide-dots { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-spacer">↓ Скролл вниз</div>
+
+<section class="sticky-section" id="sticky-section">
+  <div class="sticky-panel">
+
+    <div class="labels-col" id="labels-col">
+      <div class="step-label is-active" data-index="0">
+        <span class="step-label__num">Шаг 01</span>
+        <span class="step-label__title">Первый заголовок — что-то важное</span>
+      </div>
+      <div class="step-label" data-index="1">
+        <span class="step-label__num">Шаг 02</span>
+        <span class="step-label__title">Второй заголовок — следующий шаг</span>
+      </div>
+      <div class="step-label" data-index="2">
+        <span class="step-label__num">Шаг 03</span>
+        <span class="step-label__title">Третий заголовок — финальный этап</span>
+      </div>
+    </div>
+
+    <div class="slides-col">
+      <div class="slides-track" id="slides-track">
+
+        <div class="slide">
+          <svg viewBox="0 0 900 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="900" height="900" fill="#0d0d1f"/>
+            <ellipse cx="450" cy="560" rx="380" ry="60" fill="#c8603a" opacity=".35"/>
+            <circle cx="450" cy="558" r="90" fill="#e8873a" opacity=".9"/>
+            <circle cx="450" cy="558" r="130" fill="none" stroke="#e8873a" stroke-width="2" opacity=".25"/>
+            <circle cx="450" cy="558" r="170" fill="none" stroke="#e8873a" stroke-width="1" opacity=".12"/>
+            <polygon points="0,900 200,440 400,900" fill="#12122a"/>
+            <polygon points="150,900 370,370 610,900" fill="#0e0e22"/>
+            <polygon points="400,900 590,415 800,900" fill="#12122a"/>
+            <polygon points="600,900 775,455 900,900" fill="#0d0d1f"/>
+            <circle cx="100" cy="80" r="1.5" fill="white" opacity=".7"/>
+            <circle cx="220" cy="140" r="1" fill="white" opacity=".5"/>
+            <circle cx="340" cy="55" r="2" fill="white" opacity=".6"/>
+            <circle cx="600" cy="95" r="1.5" fill="white" opacity=".5"/>
+            <circle cx="720" cy="48" r="1" fill="white" opacity=".7"/>
+            <circle cx="820" cy="130" r="2" fill="white" opacity=".4"/>
+            <circle cx="500" cy="175" r="1" fill="white" opacity=".6"/>
+          </svg>
+        </div>
+
+        <div class="slide">
+          <svg viewBox="0 0 900 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="900" height="900" fill="#0e0e0e"/>
+            <line x1="150" y1="0" x2="150" y2="900" stroke="#222" stroke-width="1"/>
+            <line x1="300" y1="0" x2="300" y2="900" stroke="#222" stroke-width="1"/>
+            <line x1="450" y1="0" x2="450" y2="900" stroke="#222" stroke-width="1"/>
+            <line x1="600" y1="0" x2="600" y2="900" stroke="#222" stroke-width="1"/>
+            <line x1="750" y1="0" x2="750" y2="900" stroke="#222" stroke-width="1"/>
+            <line x1="0" y1="150" x2="900" y2="150" stroke="#222" stroke-width="1"/>
+            <line x1="0" y1="300" x2="900" y2="300" stroke="#222" stroke-width="1"/>
+            <line x1="0" y1="450" x2="900" y2="450" stroke="#222" stroke-width="1"/>
+            <line x1="0" y1="600" x2="900" y2="600" stroke="#222" stroke-width="1"/>
+            <line x1="0" y1="750" x2="900" y2="750" stroke="#222" stroke-width="1"/>
+            <rect x="150" y="150" width="300" height="300" fill="#1a1a1a" stroke="#333" stroke-width="1"/>
+            <rect x="300" y="300" width="300" height="300" fill="#161616" stroke="#2a2a2a" stroke-width="1"/>
+            <rect x="450" y="150" width="300" height="150" fill="#181818" stroke="#2e2e2e" stroke-width="1"/>
+            <rect x="150" y="600" width="150" height="150" fill="#1c1c1c" stroke="#333" stroke-width="1"/>
+            <rect x="600" y="450" width="150" height="300" fill="#181818" stroke="#2a2a2a" stroke-width="1"/>
+            <circle cx="450" cy="450" r="12" fill="#e0e0e0"/>
+            <circle cx="450" cy="450" r="28" fill="none" stroke="#e0e0e0" stroke-width="1" opacity=".3"/>
+            <circle cx="450" cy="450" r="44" fill="none" stroke="#e0e0e0" stroke-width="1" opacity=".12"/>
+          </svg>
+        </div>
+
+        <div class="slide">
+          <svg viewBox="0 0 900 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <rect width="900" height="900" fill="#080810"/>
+            <path d="M0,600 Q225,500 450,580 Q675,660 900,560 L900,900 L0,900 Z" fill="#0f0f22"/>
+            <path d="M0,645 Q225,545 450,625 Q675,705 900,605 L900,900 L0,900 Z" fill="#12122a"/>
+            <path d="M0,685 Q225,605 450,665 Q675,735 900,655 L900,900 L0,900 Z" fill="#0a0a1a"/>
+            <path d="M0,550 Q180,470 360,530 Q540,590 720,510 Q810,470 900,520 L900,605 Q675,660 450,580 Q225,500 0,600 Z" fill="#1a1a35" opacity=".7"/>
+            <path d="M0,500 Q150,430 300,480 Q450,530 600,460 Q750,390 900,450 L900,525 Q810,470 720,510 Q540,590 360,530 Q180,470 0,550 Z" fill="#161630" opacity=".5"/>
+            <ellipse cx="450" cy="480" rx="200" ry="80" fill="#4040aa" opacity=".12"/>
+            <ellipse cx="450" cy="480" rx="100" ry="40" fill="#6060cc" opacity=".15"/>
+            <circle cx="80" cy="120" r="1.5" fill="white" opacity=".5"/>
+            <circle cx="200" cy="60" r="1" fill="white" opacity=".4"/>
+            <circle cx="400" cy="90" r="2" fill="white" opacity=".6"/>
+            <circle cx="620" cy="140" r="1" fill="white" opacity=".4"/>
+            <circle cx="760" cy="70" r="1.5" fill="white" opacity=".5"/>
+            <circle cx="860" cy="200" r="1" fill="white" opacity=".3"/>
+          </svg>
+        </div>
+
+      </div>
+
+      <div class="slide-dots" id="slide-dots">
+        <div class="slide-dot is-active" data-index="0"></div>
+        <div class="slide-dot" data-index="1"></div>
+        <div class="slide-dot" data-index="2"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="page-spacer">Конец блока ↓</div>
+<div class="page-spacer" style="border:none">Ещё контент</div>
+
+<script>
+(function () {
+  var SLIDES = 3;
+  var section = document.getElementById('sticky-section');
+  var track = document.getElementById('slides-track');
+  var labels = document.querySelectorAll('.step-label');
+
+  if (!section || !track) return;
+
+  var rafPending = false;
+  var lastActive = 0;
+
+  function isMobile() {
+    return window.innerWidth <= 768;
+  }
+
+  function update() {
+    rafPending = false;
+    if (isMobile()) return;
+
+    var sectionTop = section.getBoundingClientRect().top + window.scrollY;
+    var scrolled = window.scrollY - sectionTop;
+    var range = section.offsetHeight - window.innerHeight;
+    var progress = Math.min(Math.max(scrolled / range, 0), 1);
+
+    var translateY = -(progress * (SLIDES - 1) * window.innerHeight);
+    track.style.transform = 'translateY(' + translateY + 'px)';
+
+    var active = Math.min(Math.floor(progress * SLIDES), SLIDES - 1);
+
+    if (active !== lastActive) {
+      lastActive = active;
+      labels.forEach(function (el, i) {
+        el.classList.toggle('is-active', i === active);
+      });
+    }
+  }
+
+  function onScroll() {
+    if (!rafPending) {
+      rafPending = true;
+      requestAnimationFrame(update);
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', update, { passive: true });
+  update();
+
+  var current = 0;
+  var startX = 0;
+  var startY = 0;
+  var dots = document.querySelectorAll('.slide-dot');
+  var slidesCol = track.parentElement;
+  var THRESHOLD = 48;
+
+  function goTo(idx) {
+    current = Math.max(0, Math.min(idx, SLIDES - 1));
+    track.style.transform = 'translateX(-' + (current * 100) + '%)';
+
+    labels.forEach(function (el, i) {
+      el.classList.toggle('is-active', i === current);
+    });
+
+    dots.forEach(function (el, i) {
+      el.classList.toggle('is-active', i === current);
+    });
+
+    var activeLabel = document.querySelector('.step-label[data-index="' + current + '"]');
+    if (activeLabel) {
+      activeLabel.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }
+
+  slidesCol.addEventListener('touchstart', function (e) {
+    if (!isMobile()) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  slidesCol.addEventListener('touchend', function (e) {
+    if (!isMobile()) return;
+
+    var dx = e.changedTouches[0].clientX - startX;
+    var dy = e.changedTouches[0].clientY - startY;
+
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > THRESHOLD) {
+      goTo(dx < 0 ? current + 1 : current - 1);
+    }
+  }, { passive: true });
+
+  dots.forEach(function (dot, i) {
+    dot.addEventListener('click', function () {
+      if (isMobile()) goTo(i);
+    });
+  });
+
+  labels.forEach(function (label, i) {
+    label.addEventListener('click', function () {
+      if (isMobile()) goTo(i);
+    });
+  });
+
+  window.addEventListener('resize', function () {
+    if (isMobile()) {
+      track.style.transform = 'translateX(-' + (current * 100) + '%)';
+    } else {
+      update();
+    }
+  }, { passive: true });
+}());
+</script>
+</body>
+</html>
